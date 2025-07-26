@@ -1,0 +1,21 @@
+private void button4_Click(object sender, EventArgs e)
+{
+
+    generate_gmm_route.Class1 a = new generate_gmm_route.Class1();
+    for(int i=0;i<3;i++)
+    {
+        MWNumericArray ma = DataList[i];
+        demo = ma;
+        quatRef = (MWStructArray)a.generate_gmm_route(demo, tau, dt);
+        quatRefList.Add(quatRef);
+    }
+    MessageBox.Show("高斯拟合完成", "提示", MessageBoxButtons.OK);
+    #region 打开下位机控制器
+    machineControl = new MachineControl();
+
+    machineControl.setFormInsertValue += new setInsertValue(_setXYZdirection);
+    machineControl.setFormDoubleKMP += new setDoubleKMP(_setXYZdoubleKMP);
+
+    machineControl.Show();
+    #endregion
+}

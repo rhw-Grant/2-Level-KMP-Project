@@ -1,0 +1,46 @@
+private void button5_Click(object sender, EventArgs e)
+{
+
+    //进行kmp生成运算
+    generate_kmp_route.Class1 a = new generate_kmp_route.Class1();
+    for(int i=0;i<3;i++)
+    {
+        quatRef = quatRefList[i];
+        trajAda = a.generate_kmp_route(quatRef, tau, dt);
+        trajAdaList.Add(trajAda);
+    }
+
+    double[] insertarray = {0.1};
+    MWNumericArray ma1 = insertarray.ToArray();
+    MWArray insertpoint = ma1;
+    show_pics.Class1 b = new show_pics.Class1();
+    b.show_pics(trajAdaList[0], trajAdaList[1], trajAdaList[2], insertpoint);
+
+    #region 绘制路线图
+    List<double[,]> result = new List<double[,]>();
+    // 将MATLAB的数据转化为中间过渡格式
+    MWNumericArray ma = (MWNumericArray)trajAdaList[0];
+    result.Add((double[,])ma.ToArray(MWArrayComponent.Real));
+    ma = (MWNumericArray)trajAdaList[1];
+    result.Add((double[,])ma.ToArray(MWArrayComponent.Real));
+    ma = (MWNumericArray)trajAdaList[2];
+    result.Add((double[,])ma.ToArray(MWArrayComponent.Real));
+    #endregion
+    //设置时间
+            
+    double[,] routeData=new double[ Convert.ToInt32(tau / dt),4];
+    for (int j=0;j<tau/dt;j++)
+    {
+        routeData[j, 0] = j*dt;
+    }
+    //输入路径
+    for(int i=1;i<4;i++)
+    {
+        for(int j=0;j<tau/dt;j++)
+        {
+            routeData[j, i] = result[i-1][1, j];
+        }
+    }
+    machineControl.dataTransfer.setRouteData(routeData);
+
+}

@@ -1,0 +1,75 @@
+List<MWArray> insertpointList = new List<MWArray>();
+public void  _setXYZdirection()
+{
+    int u = 0;
+    //3个方向的kmpinsert计算
+    while(u<3)
+    {
+        //正负两个方向分别进行判断
+        for(int j=0;j<2;j++)
+        {
+            //matlab函数trajAda=kmp_insert_point(oldr,quatRef,insertpoint,demo,tau,dt)
+            //输入与生成kmp相同
+            //进行kmp插入点运算
+            if (machineControl.dataTransfer.getInsertPoint(u,j).Count>0)
+            {
+                List<routeInfo> temp = machineControl.dataTransfer.getInsertPoint(u, j);
+                double[] insertarray = new double[temp.Count];
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    insertarray[i] = temp[i].route_time/10;
+                }
+                //double[] insertarray = { 10, 12.5 };
+                MWNumericArray ma1 = insertarray.ToArray();
+                MWArray insertpoint = ma1;
+                insertpointList.Add(ma1);
+                kmp_insert_point.Class1 a = new kmp_insert_point.Class1();
+                //输入老路径
+                oldr = trajAdaList[u];
+                MWArray[] agrsout = null;//设置一个有三个元素的ml数组
+                Console.WriteLine("insertpoint={0}", insertarray[0]);
+                agrsout = a.kmp_insert_point(3, oldr, quatRefList[u], insertpoint, tau, dt, j);
+                //输出新路径
+                trajAdaList[u] = agrsout[1];
+                quatRefList[u] = (MWStructArray)agrsout[2];
+            }
+                    
+        }
+        u++;
+    }
+    double[,] routeData = new double[Convert.ToInt32(tau / dt), 4];
+    for (int j = 0; j < tau / dt; j++)
+    {
+        routeData[j, 0] = j * dt;
+    }
+    //输入路径
+        for (int i = 1; i < 4; i++)
+    {
+        double[] s = new double[1];
+        MWNumericArray ma = (MWNumericArray)trajAdaList[i - 1];
+        double[] result = (double[])ma.ToVector(MWArrayComponent.Real);
+        for (int j = 0; j < tau / dt; j++)
+        {
+            s = result;
+            routeData[j, i] = s[3 * j + 1];
+            //Console.WriteLine("s={0}", s[3 * j + 1]);
+        }
+    }
+    //将新生成的数据保存到新类中
+    machineControl.dataTransfer.setRouteData(routeData);
+
+    //double[] insertarray1 = { 10, 12.5 };
+    //MWNumericArray ma11 = insertarray1.ToArray();
+    //MWArray insertpoint1 = ma11;
+    //绘制三维图
+    show_pics.Class1 b = new show_pics.Class1();
+    for(int i=0;i< insertpointList.Count; i++)
+    {
+        b.show_pics(trajAdaList[0], trajAdaList[1], trajAdaList[2], insertpointList[i]);
+    }
+    //清空设置轴数组
+    machineControl.dataTransfer.setFlag(0, false);
+    machineControl.dataTransfer.setFlag(1, false);
+    machineControl.dataTransfer.setFlag(2, false);
+    insertpointList.Clear();
+}

@@ -1,0 +1,88 @@
+private void route_change_btn_Click(object sender, EventArgs e)
+{
+    //计算z_score
+    for (int i = 0; i < 1000; i++)
+    {
+        double mean_x = Convert.ToDouble(x_torque_datatable.Rows[i][1]);
+        double up_sigma_x = Convert.ToDouble(x_torque_datatable.Rows[i][2]);
+        double down_sigma_x = Convert.ToDouble(x_torque_datatable.Rows[i][3]);
+        z_score_x[i] =  (mean_x - forceList[(int)i * forceList.Count / 1000][3]) / (up_sigma_x - down_sigma_x);
+        if (z_score_x[i] > 1)
+        {
+            int flag = 1;
+            Console.WriteLine("x轴需要向下修正的点为：{0}", i);
+            if (i > 100 && i < 900)
+            {
+                int num = (int)i / 10;
+                dataTransfer.setInsertPoint(num * 10, 1, 0, flag, 0);
+            }
+
+        }
+        else if (z_score_x[i] < -1)
+        {
+            int flag = 0;
+            Console.WriteLine("x轴需要向上修正的点为：{0}", i);
+            if (i > 100 && i < 900)
+            {
+                int num = (int)i / 10;
+                dataTransfer.setInsertPoint(num * 10, 1, 0, flag, 0);
+            }
+        }
+        z_score_y[i] = 0;
+        double mean_y = Convert.ToDouble(y_torque_datatable.Rows[i][1]);
+        double up_sigma_y = Convert.ToDouble(y_torque_datatable.Rows[i][2]);
+        double down_sigma_y = Convert.ToDouble(y_torque_datatable.Rows[i][3]);
+        z_score_y[i] = 2 * (mean_y - forceList[(int)i * forceList.Count / 1000][4]) / (up_sigma_y - down_sigma_y);
+        if (z_score_y[i] > 1)
+        {
+            int flag = 1;
+            Console.WriteLine("y轴需要向下修正的点为：{0}", i);
+            //for (int j = -2; j < 3; j++)
+            //{
+            //    dataTransfer.setInsertPoint(i + j, 1, 0, flag, 1);
+            //}
+            dataTransfer.setInsertPoint(i, 1, 0, flag, 0);
+        }
+        else if (z_score_y[i] < -1)
+        {
+            int flag = 0;
+            Console.WriteLine("y轴需要向上修正的点为：{0}", i);
+            //for (int j = -2; j < 3; j++)
+            //{
+            //    dataTransfer.setInsertPoint(i + j, 1, 0, flag, 1);
+            //}
+            dataTransfer.setInsertPoint(i, 1, 0, flag, 1);
+        }
+    }
+
+    if (is_route_change.Checked==true)
+    {
+        //WriteZscore();
+        //触发事件
+        setFormInsertValue();
+        doubleObj = dataTransfer.getRouteData();//保存欧式空间角度
+        InsertPoint_x.Clear();
+        InsertPoint_y.Clear();
+        InsertPoint_z.Clear();
+        //计算更新的数据
+        updateRoute();
+        count = 0;
+        //重新开启电机和力写入线程
+        this.MotorControl_thread.Resume();
+        this.WriteForce_thread.Resume();
+        dataTransfer.CleanInsertPoint();
+        drawChart2();
+        forceList.Clear();
+        angleList.Clear();
+    }
+    else
+    {
+        //WriteZscore();
+        count = 0;
+        forceList.Clear();
+        angleList.Clear();
+        dataTransfer.CleanInsertPoint();
+        this.MotorControl_thread.Resume();
+        this.WriteForce_thread.Resume();
+    }
+}
